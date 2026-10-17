@@ -137,32 +137,32 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="composer-modal-title"
     >
       <div
-        className="relative bg-white dark:bg-[#181920] rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-800 max-w-xl w-full p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg max-h-[92vh] flex flex-col bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-800 shrink-0 bg-slate-900">
           <div>
             <h2
               id="composer-modal-title"
-              className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-tight"
+              className="text-base sm:text-lg font-bold text-slate-100 leading-tight"
             >
               Schedule New Post
             </h2>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-400">
               Compose copy, select destinations, and set publish time
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -170,11 +170,15 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
         </div>
 
         {/* Modal Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          id="post-composer-form"
+          onSubmit={handleSubmit}
+          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
+        >
           {/* Platform Selector Checkboxes / Buttons */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">
-              Select Platforms <span className="text-rose-500">*</span>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
+              Select Platforms <span className="text-rose-400">*</span>
             </label>
             <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Select platforms">
               {ALL_PLATFORMS.map((platform) => {
@@ -190,7 +194,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
                     className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                       isSelected
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                        : 'bg-slate-50 dark:bg-slate-800/80 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700/80'
+                        : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700/80'
                     }`}
                   >
                     {info.icon}
@@ -200,7 +204,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
               })}
             </div>
             {!hasPlatform && (
-              <p className="text-xs text-rose-500 mt-1.5 flex items-center gap-1">
+              <p className="text-xs text-rose-400 mt-1.5 flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" />
                 <span>Please select at least one platform</span>
               </p>
@@ -212,9 +216,9 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
             <div className="flex items-center justify-between mb-1.5">
               <label
                 htmlFor="post-content"
-                className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300"
+                className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
               >
-                Post Content <span className="text-rose-500">*</span>
+                Post Content <span className="text-rose-400">*</span>
               </label>
             </div>
             <textarea
@@ -223,7 +227,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="What would you like to broadcast to your audience?"
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 dark:bg-[#1f2028] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors resize-y min-h-[100px]"
+              className="w-full box-border px-3.5 py-2.5 text-sm rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-y min-h-[100px]"
               required
             />
 
@@ -240,8 +244,8 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
                       key={p}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                         isOver
-                          ? 'text-rose-600 bg-rose-50 border-rose-300 dark:bg-rose-950/60 dark:text-rose-400 dark:border-rose-800'
-                          : 'text-slate-600 bg-slate-50 border-slate-200 dark:text-slate-300 dark:bg-slate-800 dark:border-slate-700'
+                          ? 'text-rose-400 bg-rose-950/60 border-rose-800'
+                          : 'text-slate-300 bg-slate-800/80 border-slate-700'
                       }`}
                     >
                       <span>{PLATFORM_INFO[p].icon}</span>
@@ -260,7 +264,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
           <div>
             <label
               htmlFor="media-url"
-              className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5"
+              className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5"
             >
               Media Image URL (Optional)
             </label>
@@ -274,13 +278,13 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
                 value={mediaUrl}
                 onChange={(e) => setMediaUrl(e.target.value)}
                 placeholder="https://images.unsplash.com/photo-..."
-                className="w-full pl-10 pr-9 py-2 text-sm rounded-xl bg-slate-50 dark:bg-[#1f2028] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+                className="w-full box-border pl-10 pr-9 py-2 text-sm rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
               {mediaUrl && (
                 <button
                   type="button"
                   onClick={() => setMediaUrl('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
                   aria-label="Clear media url"
                 >
                   <X className="w-4 h-4" />
@@ -290,8 +294,8 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
 
             {/* Thumbnail preview if URL provided */}
             {mediaUrl.trim() && (
-              <div className="relative mt-2 p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 flex items-center gap-3">
-                <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 border border-slate-200 dark:border-slate-600">
+              <div className="relative mt-2 p-2 rounded-xl border border-slate-700 bg-slate-800/50 flex items-center gap-3">
+                <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-700 shrink-0 border border-slate-600">
                   <img
                     src={mediaUrl}
                     alt="Media preview"
@@ -302,7 +306,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-700 dark:text-slate-300 truncate">
+                  <p className="text-xs font-medium text-slate-300 truncate">
                     {mediaUrl}
                   </p>
                   <p className="text-[11px] text-slate-400">Media attachment preview</p>
@@ -312,49 +316,56 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
           </div>
 
           {/* Schedule Date & Time (Local) */}
-          <div>
+          <div className="space-y-1.5">
             <label
               htmlFor="scheduled-datetime"
-              className="block text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5"
+              className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"
             >
-              Schedule Date & Time (Local) <span className="text-rose-500">*</span>
+              <span>Schedule Date & Time (Local)</span>
+              <span className="text-rose-400">*</span>
             </label>
             <input
               id="scheduled-datetime"
               type="datetime-local"
-              min={minDateTime}
+              // eslint-disable-next-line react-hooks/purity
+              min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
               value={scheduledDateTime}
               onChange={(e) => setScheduledDateTime(e.target.value)}
-              className="w-full px-3.5 py-2 text-sm rounded-xl bg-slate-50 dark:bg-[#1f2028] border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
               required
+              className="w-full box-border px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all scheme-dark cursor-pointer"
             />
+            <p className="text-[11px] text-slate-400">Will be stored in UTC and broadcast in future.</p>
             {!isFutureDate && scheduledDateTime && (
-              <p className="text-xs text-rose-500 mt-1.5 flex items-center gap-1">
+              <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" />
                 <span>Scheduled date-time must be strictly in the future</span>
               </p>
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!isValid}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
-            >
-              <Calendar className="w-4 h-4" />
-              <span>Schedule Post</span>
-            </button>
-          </div>
+          {/* Hidden submit trigger so hitting Enter in inputs submits form */}
+          <button type="submit" className="hidden" disabled={!isValid} aria-hidden="true" tabIndex={-1} />
         </form>
+
+        {/* Modal Footer (Action Buttons) */}
+        <div className="p-4 sm:px-6 sm:py-4 border-t border-slate-800 bg-slate-900 flex items-center justify-end gap-3 shrink-0">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer text-center"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="post-composer-form"
+            disabled={!isValid}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Schedule Post</span>
+          </button>
+        </div>
       </div>
     </div>
   );

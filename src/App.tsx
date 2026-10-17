@@ -88,22 +88,26 @@ export default function App() {
       <Toaster position="top-right" richColors />
 
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-30 px-4 sm:px-8 py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+      <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 px-4 py-3 sm:px-8 sm:py-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0">
               F
             </div>
-            <div>
-              <h1 className="text-lg font-bold text-slate-900 leading-tight">Post Scheduler</h1>
-              <p className="text-xs text-slate-500">Manage & queue social broadcasts</p>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg font-bold text-slate-100 leading-tight truncate">
+                Post Scheduler
+              </h1>
+              <p className="text-xs text-slate-400 hidden xs:block truncate">
+                Manage & queue social broadcasts
+              </p>
             </div>
           </div>
 
           <button
             type="button"
             onClick={() => setIsComposerOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer shrink-0"
           >
             <Plus className="w-4 h-4" />
             <span>Create Post</span>
