@@ -88,28 +88,31 @@ export default function App() {
       <Toaster position="top-right" richColors />
 
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-slate-900 border-b border-slate-800 px-4 py-3 sm:px-8 sm:py-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm shrink-0">
+      <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-4 sm:px-8 py-3 sm:py-3.5">
+        <div className="max-w-5xl mx-auto flex items-center justify-between gap-3 sm:gap-4">
+          {/* Left: Brand Logo + Text */}
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-sm sm:text-base shadow-sm shrink-0">
               F
             </div>
-            <div className="min-w-0">
-              <h1 className="text-base sm:text-lg font-bold text-slate-100 leading-tight truncate">
-                Post Scheduler
-              </h1>
-              <p className="text-xs text-slate-400 hidden xs:block truncate">
+            <div className="flex flex-col justify-center min-w-0">
+              <div className="flex items-center">
+                <h1 className="text-base sm:text-xl font-bold text-slate-900 tracking-tight leading-none whitespace-nowrap">
+                  Post Scheduler
+                </h1>
+              </div>
+              <p className="text-[11px] sm:text-xs text-slate-500 font-normal leading-tight mt-1 hidden xs:block sm:block">
                 Manage & queue social broadcasts
               </p>
             </div>
           </div>
 
+          {/* Right: Create Post Button (Guaranteed to fit on mobile viewports) */}
           <button
-            type="button"
             onClick={() => setIsComposerOpen(true)}
-            className="inline-flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-medium rounded-xl shadow-sm transition-colors cursor-pointer shrink-0"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm transition-all duration-150 shrink-0 cursor-pointer active:scale-95"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             <span>Create Post</span>
           </button>
         </div>

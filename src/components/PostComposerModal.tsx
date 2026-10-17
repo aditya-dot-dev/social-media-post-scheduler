@@ -1,5 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { X, Calendar, Image as ImageIcon, AlertCircle } from 'lucide-react';
+import { X, Calendar, Image as ImageIcon, AlertCircle, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import {
+  addDays,
+  addWeeks,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+  format,
+  isSameDay,
+  isSameMonth,
+  isBefore,
+  startOfDay,
+} from 'date-fns';
 import type { Platform, Post } from '../types/post';
 
 export interface PostComposerModalProps {
@@ -55,19 +71,6 @@ const PLATFORM_INFO: Record<
 
 const ALL_PLATFORMS: Platform[] = ['x', 'instagram', 'tiktok', 'facebook'];
 
-/**
- * Returns local YYYY-MM-DDTHH:mm string offset by specified hours.
- */
-const getLocalDateTimeString = (offsetHours: number = 0): string => {
-  const date = new Date(Date.now() + offsetHours * 60 * 60 * 1000);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-};
-
 export const PostComposerModal: React.FC<PostComposerModalProps> = ({
   isOpen,
   onClose,
@@ -76,10 +79,14 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
   const [content, setContent] = useState<string>('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<Platform[]>(['x']);
   const [mediaUrl, setMediaUrl] = useState<string>('');
-  const [minDateTime] = useState<string>(() => getLocalDateTimeString(0));
-  const [scheduledDateTime, setScheduledDateTime] = useState<string>(() =>
-    getLocalDateTimeString(1)
-  );
+
+  // 100% in-DOM Date & Time State
+  const [today] = useState<Date>(() => startOfDay(new Date()));
+  const [selectedDate, setSelectedDate] = useState<Date>(() => addDays(today, 1));
+  const [viewMonth, setViewMonth] = useState<Date>(() => addDays(today, 1));
+  const [selectedHour, setSelectedHour] = useState<string>('10');
+  const [selectedMinute, setSelectedMinute] = useState<string>('00');
+  const [selectedPeriod, setSelectedPeriod] = useState<'AM' | 'PM'>('AM');
 
   // Handle ESC key press
   useEffect(() => {
@@ -94,12 +101,31 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Compute combined date
+  let hourNum = parseInt(selectedHour, 10);
+  if (selectedPeriod === 'PM' && hourNum < 12) hourNum += 12;
+  if (selectedPeriod === 'AM' && hourNum === 12) hourNum = 0;
+  const combinedDate = new Date(
+    selectedDate.getFullYear(),
+    selectedDate.getMonth(),
+    selectedDate.getDate(),
+    hourNum,
+    parseInt(selectedMinute, 10),
+    0
+  );
+
+  // Month grid calculations for viewing month
+  const monthStart = startOfMonth(viewMonth);
+  const monthEnd = endOfMonth(monthStart);
+  const startDate = startOfWeek(monthStart);
+  const endDate = endOfWeek(monthEnd);
+  const calendarDays = eachDayOfInterval({ start: startDate, end: endDate });
+
   // Validation logic
   const hasPlatform = selectedPlatforms.length > 0;
   const isContentNonEmpty = content.trim().length > 0;
-  const isFutureDate = Boolean(
-    scheduledDateTime && scheduledDateTime >= minDateTime
-  );
+  // eslint-disable-next-line react-hooks/purity
+  const isFutureDate = Boolean(!isNaN(combinedDate.getTime()) && combinedDate.getTime() > Date.now());
   const isWithinLimits = selectedPlatforms.every(
     (p) => content.length <= PLATFORM_LIMITS[p]
   );
@@ -116,7 +142,12 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
     setContent('');
     setSelectedPlatforms(['x']);
     setMediaUrl('');
-    setScheduledDateTime(getLocalDateTimeString(1));
+    const tomorrow = addDays(today, 1);
+    setSelectedDate(tomorrow);
+    setViewMonth(tomorrow);
+    setSelectedHour('10');
+    setSelectedMinute('00');
+    setSelectedPeriod('AM');
     onClose();
   };
 
@@ -124,7 +155,19 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
     e.preventDefault();
     if (!isValid) return;
 
-    const utcString = new Date(scheduledDateTime).toISOString();
+    let hourNum = parseInt(selectedHour, 10);
+    if (selectedPeriod === 'PM' && hourNum < 12) hourNum += 12;
+    if (selectedPeriod === 'AM' && hourNum === 12) hourNum = 0;
+    const combinedDate = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate(),
+      hourNum,
+      parseInt(selectedMinute, 10),
+      0
+    );
+    const utcString = combinedDate.toISOString();
+
     onSchedulePost({
       content: content.trim(),
       platforms: selectedPlatforms,
@@ -137,32 +180,32 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-sm"
       role="dialog"
       aria-modal="true"
       aria-labelledby="composer-modal-title"
     >
       <div
-        className="relative w-full max-w-lg max-h-[92vh] flex flex-col bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+        className="relative w-full max-w-lg max-h-[92vh] flex flex-col bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 sm:p-6 pb-3 sm:pb-4 border-b border-slate-800 shrink-0 bg-slate-900">
+        <div className="flex items-center justify-between p-4 sm:p-6 border-b border-slate-100 bg-white shrink-0">
           <div>
             <h2
               id="composer-modal-title"
-              className="text-base sm:text-lg font-bold text-slate-100 leading-tight"
+              className="text-lg font-bold text-slate-900 leading-tight"
             >
               Schedule New Post
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500">
               Compose copy, select destinations, and set publish time
             </p>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
             aria-label="Close modal"
           >
             <X className="w-5 h-5" />
@@ -173,12 +216,12 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
         <form
           id="post-composer-form"
           onSubmit={handleSubmit}
-          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4"
+          className="flex-1 max-h-[75vh] overflow-y-auto p-4 sm:p-6 space-y-4 bg-white"
         >
           {/* Platform Selector Checkboxes / Buttons */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-              Select Platforms <span className="text-rose-400">*</span>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">
+              Select Platforms <span className="text-rose-500">*</span>
             </label>
             <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Select platforms">
               {ALL_PLATFORMS.map((platform) => {
@@ -194,7 +237,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
                     className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
                       isSelected
                         ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs'
-                        : 'bg-slate-800/80 text-slate-300 border-slate-700 hover:bg-slate-700/80'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                     }`}
                   >
                     {info.icon}
@@ -204,7 +247,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
               })}
             </div>
             {!hasPlatform && (
-              <p className="text-xs text-rose-400 mt-1.5 flex items-center gap-1">
+              <p className="text-xs text-rose-500 mt-1.5 flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" />
                 <span>Please select at least one platform</span>
               </p>
@@ -216,9 +259,9 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
             <div className="flex items-center justify-between mb-1.5">
               <label
                 htmlFor="post-content"
-                className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+                className="block text-xs font-semibold text-slate-700 uppercase tracking-wider"
               >
-                Post Content <span className="text-rose-400">*</span>
+                Post Content <span className="text-rose-500">*</span>
               </label>
             </div>
             <textarea
@@ -227,7 +270,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
               value={content}
               onChange={(e) => setContent(e.target.value)}
               placeholder="What would you like to broadcast to your audience?"
-              className="w-full box-border px-3.5 py-2.5 text-sm rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-y min-h-[100px]"
+              className="w-full box-border px-3.5 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all resize-y min-h-[100px]"
               required
             />
 
@@ -244,8 +287,8 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
                       key={p}
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
                         isOver
-                          ? 'text-rose-400 bg-rose-950/60 border-rose-800'
-                          : 'text-slate-300 bg-slate-800/80 border-slate-700'
+                          ? 'text-rose-600 bg-rose-50 border-rose-300'
+                          : 'text-slate-600 bg-slate-50 border-slate-200'
                       }`}
                     >
                       <span>{PLATFORM_INFO[p].icon}</span>
@@ -264,7 +307,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
           <div>
             <label
               htmlFor="media-url"
-              className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-1.5"
+              className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5"
             >
               Media Image URL (Optional)
             </label>
@@ -278,13 +321,13 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
                 value={mediaUrl}
                 onChange={(e) => setMediaUrl(e.target.value)}
                 placeholder="https://images.unsplash.com/photo-..."
-                className="w-full box-border pl-10 pr-9 py-2 text-sm rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                className="w-full box-border pl-10 pr-9 py-2.5 text-sm rounded-xl bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
               />
               {mediaUrl && (
                 <button
                   type="button"
                   onClick={() => setMediaUrl('')}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                   aria-label="Clear media url"
                 >
                   <X className="w-4 h-4" />
@@ -294,8 +337,8 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
 
             {/* Thumbnail preview if URL provided */}
             {mediaUrl.trim() && (
-              <div className="relative mt-2 p-2 rounded-xl border border-slate-700 bg-slate-800/50 flex items-center gap-3">
-                <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-700 shrink-0 border border-slate-600">
+              <div className="relative mt-2 p-2 rounded-xl border border-slate-200 bg-slate-50 flex items-center gap-3">
+                <div className="w-14 h-14 rounded-lg overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
                   <img
                     src={mediaUrl}
                     alt="Media preview"
@@ -306,7 +349,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
                   />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-slate-300 truncate">
+                  <p className="text-xs font-medium text-slate-700 truncate">
                     {mediaUrl}
                   </p>
                   <p className="text-[11px] text-slate-400">Media attachment preview</p>
@@ -315,29 +358,211 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
             )}
           </div>
 
-          {/* Schedule Date & Time (Local) */}
-          <div className="space-y-1.5">
-            <label
-              htmlFor="scheduled-datetime"
-              className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5"
-            >
-              <span>Schedule Date & Time (Local)</span>
-              <span className="text-rose-400">*</span>
+          {/* Schedule Date & Time (100% In-DOM Custom Picker) */}
+          <div className="space-y-2.5">
+            <label className="text-xs font-semibold text-slate-700 uppercase tracking-wider flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <span>Schedule Date & Time (Local)</span>
+                <span className="text-rose-500">*</span>
+              </span>
+              <span className="text-[11px] font-normal text-slate-500 lowercase">
+                stored in UTC
+              </span>
             </label>
-            <input
-              id="scheduled-datetime"
-              type="datetime-local"
-              // eslint-disable-next-line react-hooks/purity
-              min={new Date(Date.now() + 60000).toISOString().slice(0, 16)}
-              value={scheduledDateTime}
-              onChange={(e) => setScheduledDateTime(e.target.value)}
-              required
-              className="w-full box-border px-3.5 py-2.5 rounded-xl bg-slate-800/80 border border-slate-700 text-slate-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all scheme-dark cursor-pointer"
-            />
-            <p className="text-[11px] text-slate-400">Will be stored in UTC and broadcast in future.</p>
-            {!isFutureDate && scheduledDateTime && (
-              <p className="text-xs text-rose-400 mt-1 flex items-center gap-1">
-                <AlertCircle className="w-3.5 h-3.5" />
+
+            {/* Quick Date Presets Row */}
+            <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Quick date presets">
+              {[
+                { label: 'Today', date: today },
+                { label: 'Tomorrow', date: addDays(today, 1) },
+                { label: '+2 Days', date: addDays(today, 2) },
+                { label: '+1 Week', date: addWeeks(today, 1) },
+              ].map((preset) => {
+                const isActive = isSameDay(selectedDate, preset.date);
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => {
+                      setSelectedDate(preset.date);
+                      setViewMonth(preset.date);
+                    }}
+                    className={`px-3 py-1 text-xs rounded-full font-medium transition-all cursor-pointer border ${
+                      isActive
+                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-semibold'
+                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Compact Mini Month Calendar Grid */}
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+              {/* Month Navigation Header */}
+              <div className="flex items-center justify-between px-1">
+                <button
+                  type="button"
+                  onClick={() => setViewMonth((prev) => subMonths(prev, 1))}
+                  className="p-1 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/70 transition-colors cursor-pointer"
+                  aria-label="Previous month"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <span className="text-xs font-bold text-slate-800 select-none">
+                  {format(viewMonth, 'MMMM yyyy')}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setViewMonth((prev) => addMonths(prev, 1))}
+                  className="p-1 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-200/70 transition-colors cursor-pointer"
+                  aria-label="Next month"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Day-of-week Headers */}
+              <div className="grid grid-cols-7 text-center text-[11px] font-semibold text-slate-400">
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                  <div key={d} className="py-0.5">
+                    {d}
+                  </div>
+                ))}
+              </div>
+
+              {/* Days Grid */}
+              <div className="grid grid-cols-7 gap-1 text-center">
+                {calendarDays.map((day) => {
+                  const isSelected = isSameDay(day, selectedDate);
+                  const isCurrentMonth = isSameMonth(day, monthStart);
+                  const isPast = isBefore(day, today);
+
+                  return (
+                    <button
+                      key={day.toISOString()}
+                      type="button"
+                      disabled={isPast}
+                      onClick={() => setSelectedDate(day)}
+                      className={`w-7 h-7 sm:w-8 sm:h-8 text-xs rounded-lg flex items-center justify-center transition-all mx-auto cursor-pointer ${
+                        isPast
+                          ? 'opacity-25 cursor-not-allowed text-slate-400'
+                          : isSelected
+                          ? 'bg-indigo-600 text-white font-semibold rounded-lg shadow-xs'
+                          : isCurrentMonth
+                          ? 'text-slate-700 hover:bg-slate-200/70'
+                          : 'text-slate-300 hover:bg-slate-100'
+                      }`}
+                    >
+                      {format(day, 'd')}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Interactive Time Selector (Tailwind Button Groups) */}
+              <div className="pt-3 border-t border-slate-200/80 space-y-2.5">
+                {/* Hours selection */}
+                <div>
+                  <span className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                    Hour (1–12)
+                  </span>
+                  <div className="grid grid-cols-6 sm:grid-cols-12 gap-1" role="group" aria-label="Select hour">
+                    {Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0')).map((h) => {
+                      const isSelected = selectedHour === h;
+                      return (
+                        <button
+                          key={h}
+                          type="button"
+                          onClick={() => setSelectedHour(h)}
+                          className={`py-1 text-xs rounded-lg font-medium transition-colors cursor-pointer border text-center ${
+                            isSelected
+                              ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-semibold'
+                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {parseInt(h, 10)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Minutes & AM/PM Row */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                  {/* Minute Selection */}
+                  <div className="flex-1">
+                    <span className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                      Minute
+                    </span>
+                    <div className="grid grid-cols-4 gap-1" role="group" aria-label="Select minute">
+                      {['00', '15', '30', '45'].map((m) => {
+                        const isSelected = selectedMinute === m;
+                        return (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => setSelectedMinute(m)}
+                            className={`py-1 text-xs rounded-lg font-medium transition-colors cursor-pointer border text-center ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-xs font-semibold'
+                                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-100'
+                            }`}
+                          >
+                            :{m}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* AM/PM Toggle */}
+                  <div className="sm:w-auto">
+                    <span className="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                      Period
+                    </span>
+                    <div className="grid grid-cols-2 gap-1 bg-slate-200/60 p-1 rounded-xl border border-slate-200">
+                      {(['AM', 'PM'] as const).map((p) => {
+                        const isSelected = selectedPeriod === p;
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => setSelectedPeriod(p)}
+                            className={`px-4 py-1 text-xs rounded-lg font-semibold transition-all cursor-pointer ${
+                              isSelected
+                                ? 'bg-indigo-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:text-slate-900'
+                            }`}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Selected Date-Time Badge */}
+              <div className="flex items-center justify-between text-xs px-3 py-2 bg-indigo-50/80 border border-indigo-100 rounded-xl text-indigo-950">
+                <span className="font-medium flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                  <span>
+                    Selected: {format(combinedDate, 'EEE, MMM d, yyyy · h:mm a')}
+                  </span>
+                </span>
+                <span className="text-[11px] text-indigo-600 font-semibold uppercase">
+                  Local
+                </span>
+              </div>
+            </div>
+
+            {!isFutureDate && (
+              <p className="text-xs text-rose-500 mt-1 flex items-center gap-1">
+                <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 <span>Scheduled date-time must be strictly in the future</span>
               </p>
             )}
@@ -348,11 +573,11 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
         </form>
 
         {/* Modal Footer (Action Buttons) */}
-        <div className="p-4 sm:px-6 sm:py-4 border-t border-slate-800 bg-slate-900 flex items-center justify-end gap-3 shrink-0">
+        <div className="shrink-0 border-t border-slate-100 bg-slate-50/50 p-4 sm:px-6 flex items-center justify-end gap-3">
           <button
             type="button"
             onClick={handleClose}
-            className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition-colors cursor-pointer text-center"
+            className="px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
           >
             Cancel
           </button>
@@ -360,7 +585,7 @@ export const PostComposerModal: React.FC<PostComposerModalProps> = ({
             type="submit"
             form="post-composer-form"
             disabled={!isValid}
-            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-slate-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-all shadow-sm cursor-pointer"
           >
             <Calendar className="w-4 h-4" />
             <span>Schedule Post</span>
