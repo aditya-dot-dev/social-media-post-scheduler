@@ -5,8 +5,8 @@ A modern, responsive social media post management and scheduling dashboard built
 ---
 
 ## Live Demo
-- Live Application: [REPLACE_WITH_YOUR_VERCEL_URL]
-- Source Code Repository: [REPLACE_WITH_YOUR_GITHUB_REPO_URL]
+- Live Application: [https://social-media-post-scheduler-two.vercel.app/]
+- Source Code Repository: [https://github.com/aditya-dot-dev/social-media-post-scheduler]
 
 ---
 
